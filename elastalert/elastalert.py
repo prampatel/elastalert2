@@ -130,6 +130,7 @@ class ElastAlerter(object):
 
         self.max_query_size = self.conf['max_query_size']
         self.scroll_keepalive = self.conf['scroll_keepalive']
+        self.track_total_hits = self.conf['track_total_hits']
         self.writeback_index = self.conf['writeback_index']
         self.run_every = self.conf['run_every']
         self.alert_time_limit = self.conf['alert_time_limit']
@@ -524,9 +525,11 @@ class ElastAlerter(object):
         )
         if term_size is None:
             term_size = rule.get('terms_size', 50)
+        
+        track_total_hits = rule.get('track_total_hits', self.track_total_hits)
         query = self.get_aggregation_query(base_query, rule, query_key, term_size, rule['timestamp_field'])
         try:
-            res = self.thread_data.current_es.search(index=index, body=query, size=0, ignore_unavailable=True)
+            res = self.thread_data.current_es.search(index=index, body=query, size=0, track_total_hits=track_total_hits, ignore_unavailable=True)
         except ElasticsearchException as e:
             if len(str(e)) > 1024:
                 e = str(e)[:1024] + '... (%d characters removed)' % (len(str(e)) - 1024)
